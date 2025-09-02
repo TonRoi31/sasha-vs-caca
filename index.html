@@ -46,21 +46,13 @@
 <canvas id="gameCanvas"></canvas>
 
 <script>
-// ====== Setup Canvas Retina ======
+// ====== Setup Canvas ======
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let width, height;
-function resizeCanvas(){
-    const dpr = window.devicePixelRatio || 1;
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    ctx.setTransform(1,0,0,1,0,0); // reset
-    ctx.scale(dpr, dpr);
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
 
 // ====== Game Variables ======
 let score = 0;
@@ -77,7 +69,7 @@ playerSprites[0].src = 'Sasha1.png';
 playerSprites[1].src = 'sasha2.png';
 let currentFrame = 0;
 let lastFrameChange = 0;
-const player = { x: width/2, y: height-120, size: Math.min(80, width/10) };
+const player = { x: width/2, y: height-120, size: 80 };
 
 // ====== Obstacles & Bonuses ======
 const cacas = [];
@@ -87,9 +79,9 @@ const spawnRate = 1000;
 const coeurRate = 1500;
 const patteRate = 2000;
 
-// ====== Images Emoji ======
-const cacaImg = new Image(); cacaImg.src='caca.png';
-const coeurImg = new Image(); coeurImg.src='coeur.png';
+// ====== Images pour obstacles/bonus ======
+const cacaImg = new Image(); cacaImg.src = 'caca.png';
+const coeurImg = new Image(); coeurImg.src = 'coeur.png';
 
 // ====== Sons ======
 const gameOverSound = new Audio('et_bim.wav');
@@ -103,9 +95,16 @@ backgroundMusic.loop = true;
 backgroundMusic.volume = 0.3;
 
 // ====== Spawn functions ======
-function spawnCaca(){ cacas.push({ x:Math.random()*(width-50), y:-50, size:50 }); }
-function spawnCoeur(){ coeurs.push({ x:Math.random()*(width-50), y:-50, size:50 }); }
-function spawnPatte(){ const img=new Image(); img.src='patte.png'; pattes.push({ x:Math.random()*(width-50), y:-50, size:50, img:img, speed:3+Math.random()*2 }); }
+function spawnCaca(){ 
+    cacas.push({ x:Math.random()*(width-50), y:-50, size: Math.min(50, width/10) }); 
+}
+function spawnCoeur(){ 
+    coeurs.push({ x:Math.random()*(width-50), y:-50, size: Math.min(50, width/10) }); 
+}
+function spawnPatte(){ 
+    const img=new Image(); img.src='patte.png'; 
+    pattes.push({ x:Math.random()*(width-50), y:-50, size:50, img:img, speed:3+Math.random()*2 }); 
+}
 
 // ====== Input ======
 let keys={};
@@ -172,22 +171,28 @@ function gameLoop(){
     player.x=Math.max(0,Math.min(width-player.size,player.x));
     ctx.drawImage(playerSprites[currentFrame],player.x,player.y,player.size,player.size);
 
+    // ====== Cacas ======
     for(let i=cacas.length-1;i>=0;i--){
-        let c=cacas[i]; c.y+=c.speed||3;
+        let c = cacas[i];
+        c.y += 3 + Math.random()*3;
         ctx.drawImage(cacaImg, c.x, c.y, c.size, c.size);
         if(isColliding(player,c)){ gameOver=true; gameOverSound.play(); }
         if(c.y>height+50) cacas.splice(i,1);
     }
 
+    // ====== Coeurs ======
     for(let i=coeurs.length-1;i>=0;i--){
-        let h=coeurs[i]; h.y+=h.speed||2;
+        let h = coeurs[i];
+        h.y += 2 + Math.random()*2;
         ctx.drawImage(coeurImg, h.x, h.y, h.size, h.size);
-        if(isColliding(player,h)){ score+=1; coeurs.splice(i,1); }
+        if(isColliding(player,h)){ score += 1; coeurs.splice(i,1); }
         if(h.y>height+50) coeurs.splice(i,1);
     }
 
+    // ====== Pattes ======
     for(let i=pattes.length-1;i>=0;i--){
-        let p=pattes[i]; p.y+=p.speed;
+        let p=pattes[i]; 
+        p.y+=p.speed; 
         ctx.drawImage(p.img,p.x,p.y,p.size,p.size);
         if(isColliding(player,p)){
             scoreFessee+=1; score+=1; moanSound.play(); pattes.splice(i,1);
@@ -199,7 +204,7 @@ function gameLoop(){
 
     ctx.fillStyle='white'; ctx.font='30px Arial'; ctx.fillText('Score: '+score,20,40);
     if(showFesseeBar){
-        let barWidth = Math.min(200, width/3);
+        let barWidth = 200;
         let fillWidth = Math.min(scoreFessee/maxFessee * barWidth, barWidth);
         ctx.fillStyle='#ff00ff'; ctx.fillRect(20,60,fillWidth,20);
         ctx.strokeStyle='white'; ctx.strokeRect(20,60,barWidth,20);
@@ -218,6 +223,12 @@ document.getElementById('playButton').addEventListener('click',()=>{
     setInterval(spawnCoeur,coeurRate);
     setInterval(spawnPatte,patteRate);
     gameLoop();
+});
+
+// ====== Resize ======
+window.addEventListener('resize',()=>{
+    width=window.innerWidth; height=window.innerHeight;
+    canvas.width=width; canvas.height=height;
 });
 </script>
 </body>

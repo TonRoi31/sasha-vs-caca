@@ -69,27 +69,23 @@ playerSprites[0].src = 'Sasha1.png';
 playerSprites[1].src = 'sasha2.png';
 let currentFrame = 0;
 let lastFrameChange = 0;
-const player = { x: width/2, y: height-120, size: 80 };
+const player = { x: width/2, y: height-120, size: Math.max(80, width/8) };
 
 // ====== Obstacles & Bonuses ======
 const cacas = [];
 const coeurs = [];
 const pattes = [];
-const spawnRate = 1000;
-const coeurRate = 1500;
-const patteRate = 2000;
+const spawnRate = 800; // plus rapide
+const coeurRate = 1200;
+const patteRate = 1800;
 
 // ====== Sprites ======
-const cacaImg = new Image();
-cacaImg.src = 'caca.png';
-const coeurImg = new Image();
-coeurImg.src = 'coeur.png';
+const cacaImg = new Image(); cacaImg.src = 'caca.png';
+const coeurImg = new Image(); coeurImg.src = 'coeur.png';
 
 // ====== Sons ======
-const gameOverSound = new Audio('et_bim.wav');
-gameOverSound.volume = 1.0;
-const moanSound = new Audio('moan.mp3');
-moanSound.volume = 0.2;
+const gameOverSound = new Audio('et_bim.wav'); gameOverSound.volume = 1.0;
+const moanSound = new Audio('moan.mp3'); moanSound.volume = 0.3;
 
 // ====== Musique de fond ======
 const backgroundMusic = new Audio('Musique.mp3');
@@ -97,15 +93,25 @@ backgroundMusic.loop = true;
 backgroundMusic.volume = 0.3;
 
 // ====== Spawn functions ======
-function spawnCaca(){ cacas.push({ x:Math.random()*(width-80), y:-80, size:80, img:cacaImg, speed:3+Math.random()*3 }); }
-function spawnCoeur(){ coeurs.push({ x:Math.random()*(width-80), y:-80, size:80, img:coeurImg, speed:2+Math.random()*2 }); }
-function spawnPatte(){ const img=new Image(); img.src='patte.png'; pattes.push({ x:Math.random()*(width-80), y:-80, size:80, img:img, speed:3+Math.random()*2 }); }
+function spawnCaca(){ 
+  cacas.push({ x:Math.random()*(width-80), y:-80, size:80, img:cacaImg, speed:5+Math.random()*3 }); 
+}
+function spawnCoeur(){ 
+  coeurs.push({ x:Math.random()*(width-80), y:-80, size:80, img:coeurImg, speed:4+Math.random()*3 }); 
+}
+function spawnPatte(){ 
+  const img=new Image(); img.src='patte.png'; 
+  pattes.push({ x:Math.random()*(width-80), y:-80, size:80, img:img, speed:5+Math.random()*3 }); 
+}
 
 // ====== Input ======
 let keys={};
 document.addEventListener('keydown',e=>keys[e.key]=true);
 document.addEventListener('keyup',e=>keys[e.key]=false);
-canvas.addEventListener('touchmove',e=>{ const t=e.touches[0]; player.x=t.clientX-player.size/2; });
+canvas.addEventListener('touchmove',e=>{
+  const t=e.touches[0]; 
+  player.x=Math.max(0, Math.min(width-player.size, t.clientX-player.size/2));
+});
 
 // ====== Background ======
 const bgImage=new Image();
@@ -161,16 +167,16 @@ function gameLoop(){
     if(bgPattern){ ctx.fillStyle=bgPattern; ctx.fillRect(0,0,width,height); } 
     else ctx.clearRect(0,0,width,height);
 
-    if(keys['ArrowLeft']||keys['a']) player.x-=7;
-    if(keys['ArrowRight']||keys['d']) player.x+=7;
-    player.x=Math.max(0,Math.min(width-player.size,player.x));
+    if(keys['ArrowLeft']||keys['a']) player.x-=10;
+    if(keys['ArrowRight']||keys['d']) player.x+=10;
+    player.x=Math.max(0, Math.min(width-player.size, player.x));
     ctx.drawImage(playerSprites[currentFrame],player.x,player.y,player.size,player.size);
 
     for(let i=cacas.length-1;i>=0;i--){
         let c=cacas[i]; 
         c.y+=c.speed; 
         ctx.drawImage(c.img, c.x, c.y, c.size, c.size);
-        if(isColliding(player,c)){ gameOver=true; gameOverSound.play(); }
+        if(isColliding(player,c)){ gameOver=true; gameOverSound.play().catch(()=>{}); }
         if(c.y>height+80) cacas.splice(i,1); 
     }
     for(let i=coeurs.length-1;i>=0;i--){
@@ -185,9 +191,9 @@ function gameLoop(){
         p.y+=p.speed; 
         ctx.drawImage(p.img,p.x,p.y,p.size,p.size);
         if(isColliding(player,p)){
-            scoreFessee+=1; score+=1; moanSound.play(); pattes.splice(i,1);
+            scoreFessee+=1; score+=1; moanSound.play().catch(()=>{}); pattes.splice(i,1);
             if(!showFesseeBar) showFesseeBar=true;
-            if(scoreFessee>=maxFessee){ gameOver=true; gameWon=true; gameOverSound.play(); }
+            if(scoreFessee>=maxFessee){ gameOver=true; gameWon=true; gameOverSound.play().catch(()=>{}); }
         }
         if(p.y>height+80) pattes.splice(i,1);
     }
@@ -205,10 +211,10 @@ function gameLoop(){
 }
 
 // ====== Start Button ======
-document.getElementById('playButton').addEventListener('click',()=>{
+document.getElementById('playButton').addEventListener('click',async ()=>{
     document.getElementById('startScreen').style.display='none';
     gameStarted=true;
-    backgroundMusic.play();
+    try { await backgroundMusic.play(); } catch(e){}
     setInterval(spawnCaca,spawnRate);
     setInterval(spawnCoeur,coeurRate);
     setInterval(spawnPatte,patteRate);
@@ -219,6 +225,7 @@ document.getElementById('playButton').addEventListener('click',()=>{
 window.addEventListener('resize',()=>{
     width=window.innerWidth; height=window.innerHeight;
     canvas.width=width; canvas.height=height;
+    player.size = Math.max(80, width/8);
 });
 </script>
 </body>
